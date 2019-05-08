@@ -28,9 +28,19 @@ resource "azurerm_storage_account" "state" {
 }
 
 resource "azurerm_storage_container" "state" {
-  count                 = length(var.containers)
-  name                  = var.containers[count.index]
+  count                 = length(var.backends)
+  name                  = var.backends[count.index].name
   resource_group_name   = var.resource_group
   storage_account_name  = azurerm_storage_account.state.name
   container_access_type = "private"
+}
+
+resource "azurerm_automation_account" "state" {
+  name                = "state_automation"
+  location            = var.location
+  resource_group_name = var.resource_group
+
+  sku {
+    name = "Basic"
+  }
 }

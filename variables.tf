@@ -10,9 +10,9 @@ variable "location" {
   description = "Azure location where resources should be deployed."
 }
 
-variable "containers" {
-  description = "List of containers to create in remote backend, could be one container per environment."
-  type        = list(string)
+variable "backends" {
+  description = "List of backends to create, for instance one per environment."
+  type        = list(object({ name = string, access = list(string)}))
 }
 
 variable "network_rules" {
