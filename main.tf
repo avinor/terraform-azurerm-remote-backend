@@ -54,11 +54,13 @@ resource "azurerm_key_vault" "state" {
 }
 
 resource "azurerm_automation_account" "state" {
-  name                = "state_automation"
+  name                = "state-automation"
   location            = var.location
   resource_group_name = var.resource_group
 
   sku {
     name = "Basic"
   }
+
+  tags = var.tags
 }
