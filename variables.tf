@@ -12,7 +12,7 @@ variable "location" {
 
 variable "backends" {
   description = "List of backends to create, for instance one per environment."
-  type        = list(object({ name = string, access = list(string)}))
+  type        = list(string)
 }
 
 variable "network_rules" {

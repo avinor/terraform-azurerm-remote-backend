@@ -4,6 +4,8 @@ locals {
   network_rule_list = var.network_rules == null ? [] : [var.network_rules]
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_storage_account" "state" {
   name                      = var.name
   resource_group_name       = var.resource_group
@@ -29,10 +31,26 @@ resource "azurerm_storage_account" "state" {
 
 resource "azurerm_storage_container" "state" {
   count                 = length(var.backends)
-  name                  = var.backends[count.index].name
+  name                  = var.backends[count.index]
   resource_group_name   = var.resource_group
   storage_account_name  = azurerm_storage_account.state.name
   container_access_type = "private"
+}
+
+resource "azurerm_key_vault" "state" {
+  count                       = length(var.backends)
+  name                        = "tfstate-${var.backends[count.index]}-kv"
+  location                    = var.location
+  resource_group_name         = var.resource_group
+  enabled_for_disk_encryption = true
+  enabled_for_deployment      = true
+  tenant_id                   = data.azurerm_client_config.current.tenant_id
+
+  sku {
+    name = "standard"
+  }
+
+  tags = var.tags
 }
 
 resource "azurerm_automation_account" "state" {
