@@ -64,3 +64,13 @@ State should now be stored remotely. Any changes after this will use the remote 
 ## CI/CD
 
 To use the remote state in a CI/CD process (for instance Azure DevOps Pipelines) it is recommended to create a service principal that is granted access to the key-vault only. It can then read the SAS Token from key-vault to access the storage account. CI/CD process should not have access to storage account directly, or use the root access key.
+
+## Notes
+
+### SAS Tokens in key-vault
+
+SAS Tokens are stored in key-vault to have better control who can access them. Users do not need access to the subscription where storage account is, just the SAS Token to access storage account. SAS Token also allows more granular access control, instead of using root access key to account. For instance can prod subscription have read access to shared remote state, but no access to write to it.
+
+### Token expiry date
+
+Looked into using Azure Automation to rotate the keys in key-vault automatically. Maybe this will be implemented later. Keys could be rotated daily together with storage account root access key. Just need to adjust the expiry date in `renew-tokens.sh` and run it on a schedule.
