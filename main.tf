@@ -51,29 +51,31 @@ resource "azurerm_key_vault" "state" {
   tags = var.tags
 }
 
-# TODO Not possible today..
+# TODO Use object id of current user
 # See https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234
 # No way to get object_id of user OR service principal now
 
-# resource "azurerm_key_vault_access_policy" "currentuser" {
-#   count                       = length(local.all_backends)
-#   vault_name          = "tfstate-${local.all_backends[count.index]}-kv"
-#   resource_group_name = var.resource_group
+resource "azurerm_key_vault_access_policy" "currentuser" {
+  count                       = length(var.backends)
+  vault_name          = "tfstate-${var.backends[count.index]}-kv"
+  resource_group_name = var.resource_group
 
-#   tenant_id = data.azurerm_client_config.current.tenant_id
-#   object_id = data.azurerm_client_config.current.object_id
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = var.user_object_id
 
-#   secret_permissions = [
-#     "get",
-#     "set",
-#     "list",
-#   ]
-# }
+  secret_permissions = [
+    "get",
+    "set",
+    "list",
+  ]
+}
 
 resource "null_resource" "token" {
-  count = var.generate_tokens ? length(var.backends) : 0
+  count = length(var.backends)
 
   provisioner "local-exec" {
     command = "${path.module}/renew-tokens.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${var.backends[count.index]} ${azurerm_key_vault.state[count.index].name} ${var.shared_backend}"
   }
+
+  depends_on = ["azurerm_key_vault_access_policy.currentuser"]
 }

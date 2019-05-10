@@ -15,10 +15,9 @@ variable "backends" {
   type        = list(string)
 }
 
-variable "generate_tokens" {
-  description = "Set to true to generate tokens in key-vault."
-  type        = bool
-  default     = false
+variable "user_object_id" {
+  description = "Object id of user running template to grant access in key-vault and generate tokens."
+  type        = string
 }
 
 variable "shared_backend" {
