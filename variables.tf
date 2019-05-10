@@ -12,18 +12,18 @@ variable "location" {
 
 variable "backends" {
   description = "List of backends to create, for instance one per environment."
-  type        = set(string)
+  type        = list(string)
 }
 
 variable "generate_tokens" {
   description = "Set to true to generate tokens in key-vault."
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "shared_backend" {
   description = "Backend that shares state with others, will create a readonly token."
-  default = ""
+  default     = ""
 }
 
 variable "network_rules" {
