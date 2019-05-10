@@ -1,5 +1,3 @@
-provider "azurerm" {}
-
 locals {
   network_rule_list = var.network_rules == null ? [] : [var.network_rules]
 }
