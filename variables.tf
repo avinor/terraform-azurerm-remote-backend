@@ -12,7 +12,7 @@ variable "location" {
 
 variable "backends" {
   description = "List of backends to create, for instance one per environment."
-  type        = list(string)
+  type        = set(string)
 }
 
 variable "generate_tokens" {
