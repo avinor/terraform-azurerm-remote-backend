@@ -15,6 +15,17 @@ variable "backends" {
   type        = list(string)
 }
 
+variable "generate_tokens" {
+  description = "Set to true to generate tokens in key-vault."
+  type = bool
+  default = false
+}
+
+variable "shared_backend" {
+  description = "Backend that shares state with others, will create a readonly token."
+  default = ""
+}
+
 variable "network_rules" {
   description = "Network rules to apply to storage account."
   type        = object({ bypass = set(string), ip_rules = list(string) })

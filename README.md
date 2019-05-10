@@ -62,3 +62,7 @@ State should now be stored remotely. Any changes after this will use the remote 
 ## CI/CD
 
 To use the remote state in a CI/CD process (for instance Azure DevOps Pipelines) it is recommended to create a service principal that is granted access to the key-vault only. It can then read the SAS Token from key-vault to access the storage account. CI/CD process should not have access to storage account directly, or use the root access key.
+
+## Key-vault token
+
+As of now it does not set the token in key-vault since it does not have access during deployment to add secrets.

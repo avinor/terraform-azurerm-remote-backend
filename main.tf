@@ -53,14 +53,29 @@ resource "azurerm_key_vault" "state" {
   tags = var.tags
 }
 
-resource "azurerm_automation_account" "state" {
-  name                = "state-automation"
-  location            = var.location
-  resource_group_name = var.resource_group
+# TODO Not possible today..
+# See https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234
+# No way to get object_id of user OR service principal now
 
-  sku {
-    name = "Basic"
+# resource "azurerm_key_vault_access_policy" "currentuser" {
+#   count                       = length(local.all_backends)
+#   vault_name          = "tfstate-${local.all_backends[count.index]}-kv"
+#   resource_group_name = var.resource_group
+
+#   tenant_id = data.azurerm_client_config.current.tenant_id
+#   object_id = data.azurerm_client_config.current.object_id
+
+#   secret_permissions = [
+#     "get",
+#     "set",
+#     "list",
+#   ]
+# }
+
+resource "null_resource" "token" {
+  count = var.generate_tokens ? length(var.backends) : 0
+
+  provisioner "local-exec" {
+    command = "${path.module}/renew-tokens.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${var.backends[count.index]} ${azurerm_key_vault.state[count.index].name} ${var.shared_backend}"
   }
-
-  tags = var.tags
 }
