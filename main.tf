@@ -1,20 +1,28 @@
 locals {
-  network_rule_list = var.network_rules == null ? [] : [var.network_rules]
+  name = replace(var.name, "/[[:^alnum:]]/", "")
 }
 
 data "azurerm_client_config" "current" {}
 
+resource "azurerm_resource_group" "state" {
+  name     = var.resource_group_name
+  location = var.location
+
+  tags = var.tags
+}
+
 resource "azurerm_storage_account" "state" {
-  name                      = var.name
-  resource_group_name       = var.resource_group
-  location                  = var.location
+  count                     = length(var.backends)
+  name                      = format("%s%ssa", lower(local.name, var.backends[count.index]))
+  resource_group_name       = azurerm_resource_group.state.name
+  location                  = azurerm_resource_group.state.location
   account_kind              = "StorageV2"
   account_tier              = "Standard"
   account_replication_type  = "GRS"
   enable_https_traffic_only = true
 
   dynamic "network_rules" {
-    for_each = local.network_rule_list
+    for_each = var.network_rules == null ? [] : [var.network_rules]
     iterator = nr
     content {
       bypass   = nr.value.bypass
@@ -29,17 +37,17 @@ resource "azurerm_storage_account" "state" {
 
 resource "azurerm_storage_container" "state" {
   count                 = length(var.backends)
-  name                  = var.backends[count.index]
-  resource_group_name   = var.resource_group
-  storage_account_name  = azurerm_storage_account.state.name
+  name                  = "state"
+  resource_group_name   = azurerm_resource_group.state.name
+  storage_account_name  = azurerm_storage_account.state[count.index].name
   container_access_type = "private"
 }
 
 resource "azurerm_key_vault" "state" {
   count                       = length(var.backends)
-  name                        = "tfstate-${var.backends[count.index]}-kv"
-  location                    = var.location
-  resource_group_name         = var.resource_group
+  name                        = format("%s-%s-kv", lower(local.name, var.backends[count.index]))
+  location                    = azurerm_resource_group.state.location
+  resource_group_name         = azurerm_resource_group.state.name
   enabled_for_disk_encryption = true
   enabled_for_deployment      = true
   tenant_id                   = data.azurerm_client_config.current.tenant_id
@@ -49,33 +57,4 @@ resource "azurerm_key_vault" "state" {
   }
 
   tags = var.tags
-}
-
-# TODO Use object id of current user
-# See https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234
-# No way to get object_id of user OR service principal now
-
-resource "azurerm_key_vault_access_policy" "currentuser" {
-  count                       = length(var.backends)
-  vault_name          = "tfstate-${var.backends[count.index]}-kv"
-  resource_group_name = var.resource_group
-
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = var.user_object_id
-
-  secret_permissions = [
-    "get",
-    "set",
-    "list",
-  ]
-}
-
-resource "null_resource" "token" {
-  count = length(var.backends)
-
-  provisioner "local-exec" {
-    command = "${path.module}/renew-tokens.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${var.backends[count.index]} ${azurerm_key_vault.state[count.index].name} ${var.shared_backend}"
-  }
-
-  depends_on = ["azurerm_key_vault_access_policy.currentuser"]
 }

@@ -2,7 +2,7 @@ variable "name" {
   description = "Name of backend storage account."
 }
 
-variable "resource_group" {
+variable "resource_group_name" {
   description = "Name of resource group to deploy resources in."
 }
 
@@ -13,16 +13,6 @@ variable "location" {
 variable "backends" {
   description = "List of backends to create, for instance one per environment."
   type        = list(string)
-}
-
-variable "user_object_id" {
-  description = "Object id of user running template to grant access in key-vault and generate tokens."
-  type        = string
-}
-
-variable "shared_backend" {
-  description = "Backend that shares state with others, will create a readonly token."
-  default     = ""
 }
 
 variable "network_rules" {
