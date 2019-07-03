@@ -21,6 +21,12 @@ variable "network_rules" {
   default     = null
 }
 
+variable "key_rotation_days" {
+  description = "Number of days between key rotations on storage account"
+  type = number
+  default = 90
+}
+
 variable "tags" {
   description = "Tags to apply to all resources created."
   type        = map(string)

@@ -2,8 +2,8 @@ module "simple" {
     source = "../../"
 
     name = "simple"
-    resource_group = "simple-rg"
+    resource_group_name = "simple-rg"
     location = "westeurope"
-    
+
     backends = ["dev"]
 }
