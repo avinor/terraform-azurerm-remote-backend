@@ -16,6 +16,13 @@ data "azuread_service_principal" "key_vault" {
   application_id = "cfa8b339-82a2-471a-a3c9-0fc0be7a4093"
 }
 
+# Fetch current user info using the az cli
+# Not possible to get the object_id of current user (not service principal) now
+# https://github.com/terraform-providers/terraform-provider-azurerm/issues/3234
+data "external" "user" {
+  program = ["az", "ad", "signed-in-user", "show", "--query", "{displayName: displayName,objectId: objectId,objectType: objectType,upn: upn}"]
+}
+
 resource "azurerm_resource_group" "state" {
   name     = var.resource_group_name
   location = var.location
@@ -69,6 +76,24 @@ resource "azurerm_key_vault" "state" {
   tags = var.tags
 }
 
+resource "azurerm_key_vault_access_policy" "current" {
+  count        = length(var.backends)
+  key_vault_id = azurerm_key_vault.state[count.index].id
+
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = data.external.user.result.objectId
+
+  secret_permissions = [
+    "get",
+  ]
+
+  storage_permissions = [
+    "set",
+    "setsas",
+    "regenerateKey",
+  ]
+}
+
 resource "azurerm_role_assignment" "state" {
   count                = length(var.backends)
   scope                = azurerm_storage_account.state[count.index].id
@@ -77,23 +102,12 @@ resource "azurerm_role_assignment" "state" {
 }
 
 # Cannot grant access to storage with terraform, do from command line
-resource "null_resource" "grant_access" {
+resource "null_resource" "generate_sas_definition" {
   count = length(var.backends)
 
   provisioner "local-exec" {
-    command = "az keyvault set-policy --name ${azurerm_key_vault.state[count.index].name} --upn $(az ad signed-in-user show -o tsv --query userPrincipalName) --storage-permission get list listsas delete set update regeneratekey recover backup restore purge"
+    command = "${path.module}/generate-sas-definition.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state[count.index].name} ${azurerm_key_vault.state[count.index].name} ${azurerm_storage_account.state[count.index].id} ${var.key_rotation_days}"
   }
 
-  depends_on = ["azurerm_role_assignment.state"]
-}
-
-# Setup key rotation from key vault
-resource "null_resource" "key_rotation" {
-  count = length(var.backends)
-
-  provisioner "local-exec" {
-    command = "az keyvault storage add --vault-name ${azurerm_key_vault.state[count.index].name} -n ${azurerm_storage_account.state[count.index].name} --active-key-name key1 --auto-regenerate-key --regeneration-period P${var.key_rotation_days}D --resource-id ${azurerm_storage_account.state[count.index].id}"
-  }
-
-  depends_on = ["null_resource.grant_access"]
+  depends_on = ["azurerm_role_assignment.state", "azurerm_key_vault_access_policy.current"]
 }

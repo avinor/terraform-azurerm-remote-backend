@@ -24,7 +24,7 @@ variable "network_rules" {
 variable "key_rotation_days" {
   description = "Number of days between key rotations on storage account"
   type        = number
-  default     = 90
+  default     = 30
 }
 
 variable "tags" {

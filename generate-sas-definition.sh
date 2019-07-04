@@ -13,35 +13,25 @@ STORAGEACCOUNT_ID=$4
 ROTATION_DAYS=$5
 
 function usage() {
-    echo "Usage: ./renew-tokens.sh {SUBSCRIPTION_ID} {STORAGEACCOUNT_NAME} {KEYVAULT_NAME}"
+    echo "Usage: ./renew-tokens.sh {SUBSCRIPTION_ID} {STORAGEACCOUNT_NAME} {KEYVAULT_NAME} {STORAGEACCOUNT_ID} {ROTATION_DAYS}"
     exit 1
 }
 
-if [ -z $SUBSCRIPTION_ID ]; then
+if [ -z $SUBSCRIPTION_ID ] || [ -z $STORAGEACCOUNT_NAME ] || [ -z $KEYVAULT_NAME ] || [ -z $STORAGEACCOUNT_ID ] || [ -z $ROTATION_DAYS ]; then
     usage
 fi
 
-if [ -z $STORAGEACCOUNT_NAME ]; then
-    usage
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    expiry_date=$(date -v +1y '+%Y-%m-%dT%H:%M:%SZ')
+else
+    expiry_date=$(date -d "+1 year" '+%Y-%m-%dT%H:%M:%SZ')
 fi
 
-if [ -z $KEYVAULT_NAME ]; then
-    usage
-fi
-
-expiry_date=$(date -d "+1 year" '+%Y-%m-%dT%H:%M:%SZ')
-
-echo -n "Granting access to key-vault..."
-az keyvault set-policy --name ${KEYVAULT_NAME} --upn $(az ad signed-in-user show -o tsv --query userPrincipalName) --storage-permission get list listsas delete set update regeneratekey recover backup restore purge
-echo "  SUCCESS"
-
-echo ""
+echo "Configuring key rotation with Key Vault..."
 az keyvault storage add --vault-name ${KEYVAULT_NAME} -n ${STORAGEACCOUNT_NAME} --active-key-name key1 --auto-regenerate-key --regeneration-period P${ROTATION_DAYS}D --resource-id ${STORAGEACCOUNT_ID}
 
-echo -n "Generating SAS Token..."
-sas_token=$(az storage container generate-sas --account-name ${STORAGEACCOUNT_NAME} --subscription ${SUBSCRIPTION_ID} --output tsv --https-only --permissions rwl --expiry ${expiry_date})
-echo "  SUCCESS"
+echo "Generating SAS Token..."
+sas_token=$(az storage account generate-sas --account-name ${STORAGEACCOUNT_NAME} --subscription ${SUBSCRIPTION_ID} --output tsv --https-only --permissions rwl --expiry ${expiry_date} --resource-types sco --services b)
 
-echo -n "Generating SAS Token Definition in Key Vault..."
-result=$(az keyvault storage sas-definition create --vault-name <YourVaultName> --account-name <YourStorageAccountName> -n <NameOfSasDefinitionYouWantToGive> --validity-period P2D --sas-type account --template-uri $sas_token)
-echo "  SUCCESS"
+echo "Generating SAS Token Definition in Key Vault..."
+result=$(az keyvault storage sas-definition create --vault-name ${KEYVAULT_NAME} --account-name ${STORAGEACCOUNT_NAME} -n terraformsastoken --validity-period P1D --sas-type account --template-uri $sas_token)
