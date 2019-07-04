@@ -70,10 +70,10 @@ resource "azurerm_key_vault" "state" {
 }
 
 resource "azurerm_role_assignment" "state" {
-  count                       = length(var.backends)
-  scope              = azurerm_storage_account.state[count.index].id
+  count                = length(var.backends)
+  scope                = azurerm_storage_account.state[count.index].id
   role_definition_name = "Storage Account Key Operator Service Role"
-  principal_id       = data.azuread_service_principal.key_vault.object_id
+  principal_id         = data.azuread_service_principal.key_vault.object_id
 }
 
 # Cannot grant access to storage with terraform, do from command line
