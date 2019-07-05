@@ -64,7 +64,7 @@ resource "azurerm_storage_container" "state" {
 
 resource "azurerm_key_vault" "state" {
   count                       = length(var.backends)
-  name                        = format("%s-%s-kv", local.name, var.backends[count.index])
+  name                        = format("%s%skv", local.name, var.backends[count.index])
   location                    = azurerm_resource_group.state.location
   resource_group_name         = azurerm_resource_group.state.name
   enabled_for_disk_encryption = true
@@ -90,7 +90,7 @@ resource "azurerm_key_vault_access_policy" "current" {
   storage_permissions = [
     "set",
     "setsas",
-    "regenerateKey",
+    "regeneratekey",
   ]
 }
 
