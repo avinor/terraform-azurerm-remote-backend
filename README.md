@@ -61,6 +61,24 @@ Both storage account and Key Vault follow same naming convention. It formats the
 
 **Key Vault:** {formatted name}{backend name}kv
 
+## Access policies
+
+Access policies for the Key Vault can be controlled by the `access_policies` variable. Each entry in list is access policy for an object_id (user, service principal or security group), which backends it should have access to and what policies. It does not allow to assign access to storage as that should not be done by any users.
+
+It is recommended to use these access policies to controll all access to Key Vault or it can remove accesses if they are manually added and backend rerun.
+
+```terraform
+access_policies = [
+    {
+        object_id = "guid",
+        backends = ["dev"],
+        certificate_permissions = [],
+        key_permissions = [],
+        secret_permissions = ["get"],
+    }
+]
+```
+
 ## SAS Token
 
 The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name}-terraformsastoken`. So to access for example below run following command to get in clear text:

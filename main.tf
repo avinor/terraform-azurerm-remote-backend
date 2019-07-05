@@ -7,6 +7,13 @@ terraform {
 
 locals {
   name = lower(replace(var.name, "/[[:^alnum:]]/", ""))
+
+  flatten_policies = flatten([for policy in var.access_policies :
+    [for backend in policy.backends : {
+      policy: policy,
+      backend: backend,
+    }]
+  ])
 }
 
 data "azurerm_client_config" "current" {}
@@ -92,6 +99,18 @@ resource "azurerm_key_vault_access_policy" "current" {
     "setsas",
     "regeneratekey",
   ]
+}
+
+resource "azurerm_key_vault_access_policy" "users" {
+  count        = length(local.flatten_policies)
+  key_vault_id = azurerm_key_vault.state[index(var.backends, local.flatten_policies[count.index].backend)].id
+
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  object_id = local.flatten_policies[count.index].policy.object_id
+
+  secret_permissions = local.flatten_policies[count.index].policy.secret_permissions
+  key_permissions = local.flatten_policies[count.index].policy.key_permissions
+  certificate_permissions = local.flatten_policies[count.index].policy.certificate_permissions
 }
 
 resource "azurerm_role_assignment" "state" {

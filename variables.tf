@@ -15,6 +15,12 @@ variable "backends" {
   type        = list(string)
 }
 
+variable "access_policies" {
+  description = "Map of access policies for an object_id (user, service principal, security group) to backend."
+  type = list(object({ object_id = string, backends = list(string), certificate_permissions = list(string), key_permissions = list(string), secret_permissions = list(string) }))
+  default = []
+}
+
 variable "network_rules" {
   description = "Network rules to apply to storage account."
   type        = object({ bypass = set(string), ip_rules = list(string) })
