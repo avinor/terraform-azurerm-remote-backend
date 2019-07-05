@@ -48,7 +48,7 @@ tau apply
 3. State should now be stored locally. Reconfigure to backend
 
 ```bash
-terraform init --reconfigure
+tau init --reconfigure
 ```
 
 State should now be stored remotely. Any changes after this will use the remote state that have been created with same template. Should now run `tau init` without any extra arguments.
