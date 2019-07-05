@@ -53,6 +53,14 @@ tau init --reconfigure
 
 State should now be stored remotely. Any changes after this will use the remote state that have been created with same template. Should now run `tau init` without any extra arguments.
 
+## Resource names
+
+Both storage account and Key Vault follow same naming convention. It formats the input name to remove all whitespace, dash etc since storage account name can only have alphanumerical characters. Name of resources use formatted name + backend name + suffix.
+
+**Storage account:** {formatted name}{backend name}sa
+
+**Key Vault:** {formatted name}{backend name}kv
+
 ## SAS Token
 
 The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name}-terraformsastoken`. So to access for example below run following command to get in clear text:
