@@ -1,19 +1,12 @@
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
-    azurerm = ">= 1.31.0"
+    azurerm = ">= 1.32.0"
   }
 }
 
 locals {
   name = lower(replace(var.name, "/[[:^alnum:]]/", ""))
-
-  flatten_policies = flatten([for policy in var.access_policies :
-    [for backend in policy.backends : {
-      policy: policy,
-      backend: backend,
-    }]
-  ])
 }
 
 data "azurerm_client_config" "current" {}
@@ -38,14 +31,17 @@ resource "azurerm_resource_group" "state" {
 }
 
 resource "azurerm_storage_account" "state" {
-  count                     = length(var.backends)
-  name                      = format("%s%ssa", local.name, var.backends[count.index])
+  name                      = format("%ssa", local.name)
   resource_group_name       = azurerm_resource_group.state.name
   location                  = azurerm_resource_group.state.location
+
   account_kind              = "StorageV2"
   account_tier              = "Standard"
   account_replication_type  = "GRS"
   enable_https_traffic_only = true
+  # TODO Enable soft delete when supported by provider
+
+  enable_advanced_threat_protection = var.enable_advanced_threat_protection
 
   dynamic "network_rules" {
     for_each = var.network_rules == null ? [] : [var.network_rules]
@@ -56,22 +52,18 @@ resource "azurerm_storage_account" "state" {
     }
   }
 
-  # TODO Enable soft delete when supported by provider
-
   tags = var.tags
 }
 
 resource "azurerm_storage_container" "state" {
-  count                 = length(var.backends)
   name                  = "state"
   resource_group_name   = azurerm_resource_group.state.name
-  storage_account_name  = azurerm_storage_account.state[count.index].name
+  storage_account_name  = azurerm_storage_account.state.name
   container_access_type = "private"
 }
 
 resource "azurerm_key_vault" "state" {
-  count                       = length(var.backends)
-  name                        = format("%s%skv", local.name, var.backends[count.index])
+  name                        = format("%skv", local.name)
   location                    = azurerm_resource_group.state.location
   resource_group_name         = azurerm_resource_group.state.name
   enabled_for_disk_encryption = true
@@ -83,9 +75,31 @@ resource "azurerm_key_vault" "state" {
   tags = var.tags
 }
 
+resource "azurerm_monitor_diagnostic_setting" "state" {
+  count                      = var.log_analytics_workspace_id != null ? 1 : 0
+  name                       = format("%s-analytics", local.name)
+  target_resource_id         = azurerm_key_vault.state.id
+  log_analytics_workspace_id = var.log_analytics_workspace_id
+
+  log {
+    category = "AuditEvent"
+
+    retention_policy {
+      enabled = false
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+
+    retention_policy {
+      enabled = false
+    }
+  }
+}
+
 resource "azurerm_key_vault_access_policy" "current" {
-  count        = length(var.backends)
-  key_vault_id = azurerm_key_vault.state[count.index].id
+  key_vault_id = azurerm_key_vault.state.id
 
   tenant_id = data.azurerm_client_config.current.tenant_id
   object_id = data.external.user.result.objectId
@@ -102,30 +116,27 @@ resource "azurerm_key_vault_access_policy" "current" {
 }
 
 resource "azurerm_key_vault_access_policy" "users" {
-  count        = length(local.flatten_policies)
-  key_vault_id = azurerm_key_vault.state[index(var.backends, local.flatten_policies[count.index].backend)].id
+  count        = length(var.access_policies)
+  key_vault_id = azurerm_key_vault.state.id
 
   tenant_id = data.azurerm_client_config.current.tenant_id
-  object_id = local.flatten_policies[count.index].policy.object_id
+  object_id = var.access_policies[count.index].object_id
 
-  secret_permissions = local.flatten_policies[count.index].policy.secret_permissions
-  key_permissions = local.flatten_policies[count.index].policy.key_permissions
-  certificate_permissions = local.flatten_policies[count.index].policy.certificate_permissions
+  secret_permissions = var.access_policies[count.index].secret_permissions
+  key_permissions = var.access_policies[count.index].key_permissions
+  certificate_permissions = var.access_policies[count.index].certificate_permissions
 }
 
 resource "azurerm_role_assignment" "state" {
-  count                = length(var.backends)
-  scope                = azurerm_storage_account.state[count.index].id
+  scope                = azurerm_storage_account.state.id
   role_definition_name = "Storage Account Key Operator Service Role"
   principal_id         = data.azuread_service_principal.key_vault.object_id
 }
 
 # Cannot grant access to storage with terraform, do from command line
 resource "null_resource" "generate_sas_definition" {
-  count = length(var.backends)
-
   provisioner "local-exec" {
-    command = "${path.module}/generate-sas-definition.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state[count.index].name} ${azurerm_key_vault.state[count.index].name} ${azurerm_storage_account.state[count.index].id} ${var.key_rotation_days}"
+    command = "${path.module}/generate-sas-definition.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${azurerm_key_vault.state.name} ${azurerm_storage_account.state.id} ${var.key_rotation_days}"
   }
 
   depends_on = ["azurerm_role_assignment.state", "azurerm_key_vault_access_policy.current"]

@@ -39,7 +39,7 @@ inputs {
 
 2. Run tau init, plan and apply, but do not create any overrides (skips backend)
 
-```
+```bash
 tau init --no-overrides
 tau plan
 tau apply
@@ -83,7 +83,7 @@ access_policies = [
 
 The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name}-terraformsastoken`. So to access for example below run following command to get in clear text:
 
-```
+```bash
 az keyvault secret show --vault-name tfstatedevkv --name tfstatedevsa-terraformsastoken --query value -o tsv
 ```
 

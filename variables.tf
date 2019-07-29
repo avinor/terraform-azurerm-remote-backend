@@ -10,14 +10,9 @@ variable "location" {
   description = "Azure location where resources should be deployed."
 }
 
-variable "backends" {
-  description = "List of backends to create, for instance one per environment."
-  type        = list(string)
-}
-
 variable "access_policies" {
   description = "Map of access policies for an object_id (user, service principal, security group) to backend."
-  type = list(object({ object_id = string, backends = list(string), certificate_permissions = list(string), key_permissions = list(string), secret_permissions = list(string) }))
+  type = list(object({ object_id = string, certificate_permissions = list(string), key_permissions = list(string), secret_permissions = list(string) }))
   default = []
 }
 
@@ -25,6 +20,17 @@ variable "network_rules" {
   description = "Network rules to apply to storage account."
   type        = object({ bypass = set(string), ip_rules = list(string) })
   default     = null
+}
+
+variable "log_analytics_workspace_id" {
+  description = "Specifies the ID of a Log Analytics Workspace where Diagnostics Data should be sent."
+  default     = null
+}
+
+variable "enable_advanced_threat_protection" {
+  description = "Boolean flag which controls if advanced threat protection is enabled."
+  type = bool
+  default = false
 }
 
 variable "key_rotation_days" {
