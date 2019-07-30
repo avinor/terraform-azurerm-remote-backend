@@ -12,8 +12,8 @@ variable "location" {
 
 variable "access_policies" {
   description = "Map of access policies for an object_id (user, service principal, security group) to backend."
-  type = list(object({ object_id = string, certificate_permissions = list(string), key_permissions = list(string), secret_permissions = list(string) }))
-  default = []
+  type        = list(object({ object_id = string, certificate_permissions = list(string), key_permissions = list(string), secret_permissions = list(string) }))
+  default     = []
 }
 
 variable "network_rules" {
@@ -29,8 +29,8 @@ variable "log_analytics_workspace_id" {
 
 variable "enable_advanced_threat_protection" {
   description = "Boolean flag which controls if advanced threat protection is enabled."
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }
 
 variable "key_rotation_days" {

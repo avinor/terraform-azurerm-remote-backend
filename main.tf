@@ -31,9 +31,9 @@ resource "azurerm_resource_group" "state" {
 }
 
 resource "azurerm_storage_account" "state" {
-  name                      = format("%ssa", local.name)
-  resource_group_name       = azurerm_resource_group.state.name
-  location                  = azurerm_resource_group.state.location
+  name                = format("%ssa", local.name)
+  resource_group_name = azurerm_resource_group.state.name
+  location            = azurerm_resource_group.state.location
 
   account_kind              = "StorageV2"
   account_tier              = "Standard"
@@ -122,8 +122,8 @@ resource "azurerm_key_vault_access_policy" "users" {
   tenant_id = data.azurerm_client_config.current.tenant_id
   object_id = var.access_policies[count.index].object_id
 
-  secret_permissions = var.access_policies[count.index].secret_permissions
-  key_permissions = var.access_policies[count.index].key_permissions
+  secret_permissions      = var.access_policies[count.index].secret_permissions
+  key_permissions         = var.access_policies[count.index].key_permissions
   certificate_permissions = var.access_policies[count.index].certificate_permissions
 }
 
