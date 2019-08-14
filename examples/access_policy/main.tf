@@ -1,19 +1,25 @@
 module "simple" {
-    source = "../../"
+    source = "avinor/remote-backend/azurerm"
+    version = "1.0.1"
 
     name = "simple"
     resource_group_name = "simple-rg"
     location = "westeurope"
 
-    backends = ["dev"]
-
     access_policies = [
         {
-            object_id = "guid",
-            backends = ["dev"],
-            certificate_permissions = [],
-            key_permissions = [],
-            secret_permissions = ["get"],
+            // Security team, "admin" access
+            object_id = "guid"
+            certificate_permissions = []
+            key_permissions = ["backup", "create", "delete", "get", "import", "list", "restore"]
+            secret_permissions  = ["backup", "delete", "get", "list", "purge", "recover", "restore", "set"]
+        },
+        {
+            // Read only access
+            object_id = "guid"
+            certificate_permissions = []
+            key_permissions = ["sign"]
+            secret_permissions = ["get"]
         }
     ]
 }

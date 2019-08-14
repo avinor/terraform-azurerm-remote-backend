@@ -1,8 +1,8 @@
 # Remote backend
 
-Terraform module to deploy a remote backend storage with Key Vault to manage SAS Token and key rotation. To access the remote state the retrieve the SAS Token from Key Vault, do not use the access keys on storage account. SAS Token retrieved from Key Vault grants 1 day access, after that it will have to be refreshed. The access keys on storage account will automatically rotate on a 30 day schedule, this can be adjusted with the input variable `key_rotation_days`.
+Terraform module to deploy a remote backend storage with Key Vault to manage SAS Token and key rotation. To access the remote state retrieve the SAS Token from Key Vault, do not use the access keys on storage account. SAS Token retrieved from Key Vault grants 1 day access, after that it will have to be refreshed. The access keys on storage account will automatically rotate on a 30 day schedule, this can be adjusted with the input variable `key_rotation_days`.
 
-Each backend creates a new storage account and Key Vault. The Key Vault can also be used for storing other secrets related to terraform.
+Each backend creates a new storage account and Key Vault. The Key Vault can also be used for storing other secrets related to terraform. Use the `access_policies` variable to define users that should have access. It is recommended to read [Secure access to a key vault](https://docs.microsoft.com/en-us/azure/key-vault/key-vault-secure-your-key-vault) documentation for which policies to apply.
 
 **Terraform has to run with Owner priviledge in Azure.**
 
@@ -37,7 +37,7 @@ inputs {
 }
 ```
 
-2. Run tau init, plan and apply, but do not create any overrides (skips backend)
+2. Run tau init, plan and apply, but do not create any overrides (skips backend configuration)
 
 ```bash
 tau init --no-overrides
@@ -45,7 +45,7 @@ tau plan
 tau apply
 ```
 
-3. State should now be stored locally. Reconfigure to backend
+3. State should now be stored locally. Reconfigure to move to defined backend
 
 ```bash
 tau init --reconfigure
@@ -81,7 +81,7 @@ access_policies = [
 
 ## SAS Token
 
-The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name}-terraformsastoken`. So to access for example below run following command to get in clear text:
+The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name}-terraformsastoken`. So to access for example above run following command to get in clear text:
 
 ```bash
 az keyvault secret show --vault-name tfstatedevkv --name tfstatedevsa-terraformsastoken --query value -o tsv

@@ -1,9 +1,8 @@
 module "simple" {
-    source = "../../"
+    source = "avinor/remote-backend/azurerm"
+    version = "1.0.1"
 
-    name = "simple"
+    name = "simplestate"
     resource_group_name = "simple-rg"
     location = "westeurope"
-
-    backends = ["dev"]
 }
