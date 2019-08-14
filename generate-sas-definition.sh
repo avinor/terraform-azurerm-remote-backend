@@ -13,7 +13,7 @@ STORAGEACCOUNT_ID=$4
 ROTATION_DAYS=$5
 
 function usage() {
-    echo "Usage: ./renew-tokens.sh {SUBSCRIPTION_ID} {STORAGEACCOUNT_NAME} {KEYVAULT_NAME} {STORAGEACCOUNT_ID} {ROTATION_DAYS}"
+    echo "Usage: ./generate-sas-definition.sh {SUBSCRIPTION_ID} {STORAGEACCOUNT_NAME} {KEYVAULT_NAME} {STORAGEACCOUNT_ID} {ROTATION_DAYS}"
     exit 1
 }
 
@@ -28,10 +28,10 @@ else
 fi
 
 echo "Configuring key rotation with Key Vault..."
-az keyvault storage add --vault-name ${KEYVAULT_NAME} -n ${STORAGEACCOUNT_NAME} --active-key-name key1 --auto-regenerate-key --regeneration-period P${ROTATION_DAYS}D --resource-id ${STORAGEACCOUNT_ID}
+az keyvault storage add --subscription ${SUBSCRIPTION_ID} --vault-name ${KEYVAULT_NAME} -n ${STORAGEACCOUNT_NAME} --active-key-name key1 --auto-regenerate-key --regeneration-period P${ROTATION_DAYS}D --resource-id ${STORAGEACCOUNT_ID}
 
 echo "Generating SAS Token..."
 sas_token=$(az storage account generate-sas --account-name ${STORAGEACCOUNT_NAME} --subscription ${SUBSCRIPTION_ID} --output tsv --https-only --permissions rwl --expiry ${expiry_date} --resource-types sco --services b)
 
 echo "Generating SAS Token Definition in Key Vault..."
-result=$(az keyvault storage sas-definition create --vault-name ${KEYVAULT_NAME} --account-name ${STORAGEACCOUNT_NAME} -n terraformsastoken --validity-period P1D --sas-type account --template-uri $sas_token)
+result=$(az keyvault storage sas-definition create --vault-name ${KEYVAULT_NAME} --subscription ${SUBSCRIPTION_ID} --account-name ${STORAGEACCOUNT_NAME} -n terraformsastoken --validity-period P1D --sas-type account --template-uri $sas_token)
