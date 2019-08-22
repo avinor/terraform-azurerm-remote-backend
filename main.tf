@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
-    azurerm = ">= 1.32.0"
+    azurerm = ">= 1.33.0"
   }
 }
 
@@ -47,8 +47,9 @@ resource "azurerm_storage_account" "state" {
     for_each = var.network_rules == null ? [] : [var.network_rules]
     iterator = nr
     content {
-      bypass   = nr.value.bypass
-      ip_rules = nr.value.ip_rules
+      default_action = "Deny"
+      bypass         = nr.value.bypass
+      ip_rules       = nr.value.ip_rules
     }
   }
 
@@ -57,9 +58,12 @@ resource "azurerm_storage_account" "state" {
 
 resource "azurerm_storage_container" "state" {
   name                  = "state"
-  resource_group_name   = azurerm_resource_group.state.name
   storage_account_name  = azurerm_storage_account.state.name
   container_access_type = "private"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_key_vault" "state" {
