@@ -25,15 +25,13 @@ environment_variables {
 
 module {
     source = "avinor/remote-backend/azurerm"
-    version = "1.0.0"
+    version = "1.0.3"
 }
 
 inputs {
-    name = "tfstate"
+    name = "tfstatedev"
     resource_group_name = "terraform-rg"
     location = "westeurope"
-
-    backends = ["shared", "dev", "test", "prod"]
 }
 ```
 
@@ -71,7 +69,6 @@ It is recommended to use these access policies to controll all access to Key Vau
 access_policies = [
     {
         object_id = "guid",
-        backends = ["dev"],
         certificate_permissions = [],
         key_permissions = [],
         secret_permissions = ["get"],
