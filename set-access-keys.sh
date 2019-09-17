@@ -13,6 +13,8 @@ if [ -z "$1" ]; then
     usage
 fi
 
+command -v az >/dev/null 2>&1 || { echo >&2 "The az cli is required to run this script."; exit 1; }
+
 NAME=$1
 
 sas_token=$(az keyvault secret show --vault-name ${NAME}kv --name ${NAME}sa-terraformsastoken --query value -o tsv)

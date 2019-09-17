@@ -84,7 +84,18 @@ The SAS Token is stored in Key Vault as a secret with name `{storageaccount_name
 az keyvault secret show --vault-name tfstatedevkv --name tfstatedevsa-terraformsastoken --query value -o tsv
 ```
 
-This could also be added as a hook in tau file.
+If using [tau](https://github.com/avinor/tau) to run terraform executions this can be run as a prepare hook.
+
+```terraform
+hook "set_access_key" {
+    trigger_on = "prepare"
+    script = "https://raw.githubusercontent.com/avinor/terraform-azurerm-remote-backend/master/set-access-keys.sh"
+    args = ["tfstatedev"]
+    set_env = true
+}
+```
+
+Arguments should be the name used when creating backend. This command will return a single line with `ARM_SAS_TOKEN=****`.
 
 ## CI/CD
 
