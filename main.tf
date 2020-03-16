@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
-    azurerm = ">= 1.33.0"
+    azurerm = "~> 1.33"
   }
 }
 
@@ -143,5 +143,5 @@ resource "null_resource" "generate_sas_definition" {
     command = "${path.module}/generate-sas-definition.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${azurerm_key_vault.state.name} ${azurerm_storage_account.state.id} ${var.key_rotation_days}"
   }
 
-  depends_on = ["azurerm_role_assignment.state", "azurerm_key_vault_access_policy.current"]
+  depends_on = [azurerm_role_assignment.state, azurerm_key_vault_access_policy.current]
 }
