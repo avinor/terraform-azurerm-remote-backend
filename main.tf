@@ -1,8 +1,10 @@
 terraform {
   required_version = ">= 0.12.0"
-  required_providers {
-    azurerm = ">= 1.33.0"
-  }
+}
+
+provider "azurerm" {
+  version = ">= 1.33.0"
+  features {}
 }
 
 locals {
@@ -41,8 +43,6 @@ resource "azurerm_storage_account" "state" {
   enable_https_traffic_only = true
   # TODO Enable soft delete when supported by provider
 
-  enable_advanced_threat_protection = var.enable_advanced_threat_protection
-
   dynamic "network_rules" {
     for_each = var.network_rules == null ? [] : [var.network_rules]
     iterator = nr
@@ -54,6 +54,12 @@ resource "azurerm_storage_account" "state" {
   }
 
   tags = var.tags
+}
+
+# not sure if this will be correct for us
+resource "azurerm_advanced_threat_protection" "state" {
+  target_resource_id = azurerm_storage_account.state.id
+  enabled            = var.enable_advanced_threat_protection
 }
 
 resource "azurerm_storage_container" "state" {
@@ -143,5 +149,5 @@ resource "null_resource" "generate_sas_definition" {
     command = "${path.module}/generate-sas-definition.sh ${data.azurerm_client_config.current.subscription_id} ${azurerm_storage_account.state.name} ${azurerm_key_vault.state.name} ${azurerm_storage_account.state.id} ${var.key_rotation_days}"
   }
 
-  depends_on = ["azurerm_role_assignment.state", "azurerm_key_vault_access_policy.current"]
+  depends_on = [azurerm_role_assignment.state, azurerm_key_vault_access_policy.current]
 }
