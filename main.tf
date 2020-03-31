@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 0.12.0"
   required_providers {
-    azurerm = "~> 1.33"
+    azurerm = "~> 1.44.0"
   }
 }
 
@@ -41,8 +41,6 @@ resource "azurerm_storage_account" "state" {
   enable_https_traffic_only = true
   # TODO Enable soft delete when supported by provider
 
-  enable_advanced_threat_protection = var.enable_advanced_threat_protection
-
   dynamic "network_rules" {
     for_each = var.network_rules == null ? [] : [var.network_rules]
     iterator = nr
@@ -54,6 +52,11 @@ resource "azurerm_storage_account" "state" {
   }
 
   tags = var.tags
+}
+
+resource "azurerm_advanced_threat_protection" "threat_protection" {
+  target_resource_id = azurerm_storage_account.state.id
+  enabled            = var.enable_advanced_threat_protection
 }
 
 resource "azurerm_storage_container" "state" {
