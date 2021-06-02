@@ -1,8 +1,27 @@
 terraform {
-  required_version = ">= 0.12.0"
+  required_version = ">= 0.13.0"
   required_providers {
-    azurerm = "~> 1.44.0"
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 2.55.0"
+    }
+    azuread = {
+      source = "hashicorp/azuread"
+      version = "~> 1.4.0"
+    }
+    external = {
+      source = "hashicorp/external"
+      version = "~> 2.1.0"
+    }
+    null = {
+      source = "hashicorp/null"
+      version = "~> 3.1.0"
+    }
   }
+}
+
+provider "azurerm" {
+  features {}
 }
 
 locals {
