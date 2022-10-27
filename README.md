@@ -68,10 +68,10 @@ It is recommended to use these access policies to controll all access to Key Vau
 ```terraform
 access_policies = [
     {
-        object_id = "guid",
+        object_id = "a08fb42d-e046-4100-8fdc-960334618440",
         certificate_permissions = [],
         key_permissions = [],
-        secret_permissions = ["get"],
+        secret_permissions = ["Get"],
     }
 ]
 ```

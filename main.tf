@@ -3,19 +3,19 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 2.55.0"
+      version = "~> 3.28.0"
     }
     azuread = {
-      source = "hashicorp/azuread"
+      source  = "hashicorp/azuread"
       version = "~> 1.4.0"
     }
     external = {
-      source = "hashicorp/external"
+      source  = "hashicorp/external"
       version = "~> 2.1.0"
     }
     null = {
-      source = "hashicorp/null"
-      version = "~> 3.1.0"
+      source  = "hashicorp/null"
+      version = "~> 3.2.0"
     }
   }
 }
@@ -131,13 +131,13 @@ resource "azurerm_key_vault_access_policy" "current" {
   object_id = data.external.user.result.objectId
 
   secret_permissions = [
-    "get",
+    "Get",
   ]
 
   storage_permissions = [
-    "set",
-    "setsas",
-    "regeneratekey",
+    "Set",
+    "SetSAS",
+    "RegenerateKey",
   ]
 }
 
